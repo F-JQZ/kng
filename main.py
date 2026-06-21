@@ -12,9 +12,7 @@ if TOKEN is None:
     exit()
 
 # ======== إعدادات البوت ========
-ALLOWED_ROLE_NAME = "k"  # اسم الرتبة المسموح لها باستخدام الأوامر (عدّله حسب رغبتك)
-# أو استخدم ID الرتبة:
-# ALLOWED_ROLE_ID =1513995625350430731
+ALLOWED_ROLE_NAME = "k"  # اسم الرتبة المسموح لها
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -26,14 +24,7 @@ tree = bot.tree
 # دالة التحقق من الصلاحية
 # ============================================
 def has_allowed_role(interaction: discord.Interaction) -> bool:
-    """التحقق مما إذا كان المستخدم يمتلك الرتبة المسموح لها"""
-    if ALLOWED_ROLE_NAME:
-        # التحقق بالاسم
-        return any(role.name == ALLOWED_ROLE_NAME for role in interaction.user.roles)
-    elif ALLOWED_ROLE_ID:
-        # التحقق بالـ ID
-        return any(role.id == ALLOWED_ROLE_ID for role in interaction.user.roles)
-    return False
+    return any(role.name == ALLOWED_ROLE_NAME for role in interaction.user.roles)
 
 # ============================================
 # أمر اختبار (Slash Command)
@@ -44,7 +35,6 @@ def has_allowed_role(interaction: discord.Interaction) -> bool:
 )
 @app_commands.describe(message="النص الذي تريد إرساله (اختياري)")
 async def test_dm(interaction: discord.Interaction, message: str = None):
-    # التحقق من الصلاحية
     if not has_allowed_role(interaction):
         await interaction.response.send_message(
             f"❌ ليس لديك الصلاحية المطلوبة. تحتاج إلى رتبة `{ALLOWED_ROLE_NAME}`.",
@@ -82,7 +72,6 @@ async def test_dm(interaction: discord.Interaction, message: str = None):
 )
 @app_commands.describe(message="النص الذي تريد إرساله للجميع (اختياري)")
 async def send_all(interaction: discord.Interaction, message: str = None):
-    # التحقق من الصلاحية
     if not has_allowed_role(interaction):
         await interaction.response.send_message(
             f"❌ ليس لديك الصلاحية المطلوبة. تحتاج إلى رتبة `{ALLOWED_ROLE_NAME}`.",
