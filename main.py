@@ -12,7 +12,7 @@ if TOKEN is None:
     exit()
 
 # ======== إعدادات البوت ========
-ALLOWED_ROLE_NAME = "K"
+ALLOWED_ROLE_NAME = "k"
 STREAM_LINK = "https://www.twitch.tv/king"  # رابط قناتك
 STREAM_NAME = "KINGS"  # اسم البث
 
