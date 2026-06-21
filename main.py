@@ -12,12 +12,13 @@ if TOKEN is None:
     exit()
 
 # ======== إعدادات البوت ========
-ALLOWED_ROLE_NAME = "k"
+ALLOWED_ROLE_NAME = "k"  # اسم الرتبة المسموح لها
 STREAM_LINK = "https://www.twitch.tv/king"  # رابط قناتك
-STREAM_NAME = "KINGS"  # اسم البث
+STREAM_NAME = "KING LIVE!"  # اسم البث
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True  # لازم عشان يجيب كل الأعضاء
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 tree = bot.tree
@@ -29,7 +30,7 @@ def has_allowed_role(interaction: discord.Interaction) -> bool:
     return any(role.name == ALLOWED_ROLE_NAME for role in interaction.user.roles)
 
 # ============================================
-# أمر اختبار
+# أمر اختبار (Slash Command)
 # ============================================
 @tree.command(
     name="test_dm",
@@ -66,13 +67,13 @@ async def test_dm(interaction: discord.Interaction, message: str = None):
         await interaction.followup.send("❌ فشل الإرسال. تأكد من أنك تسمح بالرسائل الخاصة.", ephemeral=True)
 
 # ============================================
-# أمر الإرسال للجميع
+# أمر الإرسال للجميع (في الخاص)
 # ============================================
 @tree.command(
     name="send_all",
-    description="إرسال رسالة مخصصة لجميع أعضاء السيرفر"
+    description="إرسال رسالة لجميع أعضاء السيرفر (في الخاص)"
 )
-@app_commands.describe(message="النص الذي تريد إرساله للجميع (اختياري)")
+@app_commands.describe(message="النص الذي تريد إرساله (اختياري)")
 async def send_all(interaction: discord.Interaction, message: str = None):
     if not has_allowed_role(interaction):
         await interaction.response.send_message(
@@ -100,7 +101,7 @@ async def send_all(interaction: discord.Interaction, message: str = None):
     preview = message[:500] + ("..." if len(message) > 500 else "")
     await interaction.followup.send(
         f"⚠️ **معاينة الرسالة:**\n```\n{preview}\n```\n"
-        f"📨 سيتم إرسالها لـ **{total_members}** عضو.\n"
+        f"📨 سيتم إرسالها لـ **{total_members}** عضو في الخاص.\n"
         f"هل أنت متأكد؟ اكتب `confirm` خلال 30 ثانية.",
         ephemeral=True
     )
@@ -114,7 +115,7 @@ async def send_all(interaction: discord.Interaction, message: str = None):
         await interaction.followup.send("❌ تم الإلغاء.", ephemeral=True)
         return
 
-    await interaction.followup.send(f"✅ جارٍ الإرسال إلى {total_members} عضو...", ephemeral=True)
+    await interaction.followup.send(f"✅ جارٍ الإرسال إلى {total_members} عضو... قد يستغرق هذا بضع دقائق.", ephemeral=True)
 
     success = 0
     failed = 0
@@ -126,7 +127,7 @@ async def send_all(interaction: discord.Interaction, message: str = None):
         try:
             await member.send(message)
             success += 1
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.5)  # تفادي حظر السرعة
         except:
             failed += 1
 
@@ -142,17 +143,61 @@ async def send_all(interaction: discord.Interaction, message: str = None):
     )
 
 # ============================================
+# أمر الإرسال في قناة (مع منشن)
+# ============================================
+@tree.command(
+    name="send_channel",
+    description="إرسال رسالة في قناة معينة مع منشن للجميع"
+)
+@app_commands.describe(
+    channel="القناة المراد الإرسال فيها",
+    message="النص الذي تريد إرساله"
+)
+async def send_channel(
+    interaction: discord.Interaction,
+    channel: discord.TextChannel,
+    message: str
+):
+    if not has_allowed_role(interaction):
+        await interaction.response.send_message(
+            f"❌ ليس لديك الصلاحية المطلوبة. تحتاج إلى رتبة `{ALLOWED_ROLE_NAME}`.",
+            ephemeral=True
+        )
+        return
+
+    # تأكيد قبل الإرسال
+    await interaction.response.send_message(
+        f"⚠️ هل أنت متأكد من إرسال هذه الرسالة في قناة #{channel.name}؟\n"
+        f"```\n{message[:500]}...\n```\n"
+        f"اكتب `confirm` خلال 30 ثانية.",
+        ephemeral=True
+    )
+
+    def confirm_check(m):
+        return m.author == interaction.user and m.content.lower() == "confirm"
+
+    try:
+        await bot.wait_for("message", timeout=30.0, check=confirm_check)
+    except asyncio.TimeoutError:
+        await interaction.followup.send("❌ تم الإلغاء.", ephemeral=True)
+        return
+
+    # إرسال الرسالة في القناة مع منشن
+    await channel.send(f"@everyone\n\n{message}")
+    await interaction.followup.send(f"✅ تم إرسال الرسالة في قناة #{channel.name}!", ephemeral=True)
+
+# ============================================
 # تشغيل البوت مع حالة Streaming بنفسجية
 # ============================================
 @bot.event
 async def on_ready():
     await tree.sync()
     
-    # ======== تعيين حالة البوت إلى Streaming (بنفسجي) ========
+    # تعيين حالة البوت إلى Streaming (بنفسجي)
     await bot.change_presence(
         activity=discord.Streaming(
-            name=STREAM_NAME,      # النص الظاهر (مثل: KING LIVE!)
-            url=STREAM_LINK        # رابط البث (مثل: رابط تويتش)
+            name=STREAM_NAME,
+            url=STREAM_LINK
         )
     )
     
