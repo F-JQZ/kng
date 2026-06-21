@@ -12,15 +12,28 @@ if TOKEN is None:
     exit()
 
 # ======== إعدادات البوت ========
-YOUR_USER_ID = 123456789012345678  # ضع ID حسابك هنا
+ALLOWED_ROLE_NAME = "k"  # اسم الرتبة المسموح لها باستخدام الأوامر (عدّله حسب رغبتك)
+# أو استخدم ID الرتبة:
+# ALLOWED_ROLE_ID =1513995625350430731
 
-# استخدام الصلاحيات الأساسية فقط (بدون Privileged Intents)
 intents = discord.Intents.default()
-intents.message_content = True  # ضروري لقراءة رسائل التأكيد
-# ملاحظة: لن يتمكن البوت من جلب قائمة الأعضاء إذا لم يُفعّل SERVER MEMBERS INTENT
+intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 tree = bot.tree
+
+# ============================================
+# دالة التحقق من الصلاحية
+# ============================================
+def has_allowed_role(interaction: discord.Interaction) -> bool:
+    """التحقق مما إذا كان المستخدم يمتلك الرتبة المسموح لها"""
+    if ALLOWED_ROLE_NAME:
+        # التحقق بالاسم
+        return any(role.name == ALLOWED_ROLE_NAME for role in interaction.user.roles)
+    elif ALLOWED_ROLE_ID:
+        # التحقق بالـ ID
+        return any(role.id == ALLOWED_ROLE_ID for role in interaction.user.roles)
+    return False
 
 # ============================================
 # أمر اختبار (Slash Command)
@@ -31,8 +44,12 @@ tree = bot.tree
 )
 @app_commands.describe(message="النص الذي تريد إرساله (اختياري)")
 async def test_dm(interaction: discord.Interaction, message: str = None):
-    if interaction.user.id != YOUR_USER_ID:
-        await interaction.response.send_message("❌ ليس لديك صلاحية.", ephemeral=True)
+    # التحقق من الصلاحية
+    if not has_allowed_role(interaction):
+        await interaction.response.send_message(
+            f"❌ ليس لديك الصلاحية المطلوبة. تحتاج إلى رتبة `{ALLOWED_ROLE_NAME}`.",
+            ephemeral=True
+        )
         return
 
     await interaction.response.send_message("📨 جاري إرسال الرسالة لك في الخاص...", ephemeral=True)
@@ -65,16 +82,15 @@ async def test_dm(interaction: discord.Interaction, message: str = None):
 )
 @app_commands.describe(message="النص الذي تريد إرساله للجميع (اختياري)")
 async def send_all(interaction: discord.Interaction, message: str = None):
-    if interaction.user.id != YOUR_USER_ID:
-        await interaction.response.send_message("❌ ليس لديك صلاحية.", ephemeral=True)
+    # التحقق من الصلاحية
+    if not has_allowed_role(interaction):
+        await interaction.response.send_message(
+            f"❌ ليس لديك الصلاحية المطلوبة. تحتاج إلى رتبة `{ALLOWED_ROLE_NAME}`.",
+            ephemeral=True
+        )
         return
 
-    # جلب الأعضاء (يعمل فقط إذا كان SERVER MEMBERS INTENT مفعّلاً)
-    try:
-        total_members = len(interaction.guild.members)
-    except:
-        total_members = "غير معروف (فعّل SERVER MEMBERS INTENT)"
-    
+    total_members = len(interaction.guild.members)
     await interaction.response.send_message(f"📊 **عدد أعضاء السيرفر:** {total_members}", ephemeral=True)
 
     if message is None:
