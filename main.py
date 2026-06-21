@@ -1,10 +1,10 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-import asyncio
 import os
+import asyncio
 
-# ======== قراءة التوكن من متغير البيئة ========
+# ======== قراءة التوكن ========
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 if TOKEN is None:
@@ -12,7 +12,9 @@ if TOKEN is None:
     exit()
 
 # ======== إعدادات البوت ========
-ALLOWED_ROLE_NAME = "k"  # اسم الرتبة المسموح لها
+ALLOWED_ROLE_NAME = "K"
+STREAM_LINK = "https://www.twitch.tv/king"  # رابط قناتك
+STREAM_NAME = "KINGS"  # اسم البث
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -27,7 +29,7 @@ def has_allowed_role(interaction: discord.Interaction) -> bool:
     return any(role.name == ALLOWED_ROLE_NAME for role in interaction.user.roles)
 
 # ============================================
-# أمر اختبار (Slash Command)
+# أمر اختبار
 # ============================================
 @tree.command(
     name="test_dm",
@@ -64,7 +66,7 @@ async def test_dm(interaction: discord.Interaction, message: str = None):
         await interaction.followup.send("❌ فشل الإرسال. تأكد من أنك تسمح بالرسائل الخاصة.", ephemeral=True)
 
 # ============================================
-# أمر الإرسال للجميع (Slash Command)
+# أمر الإرسال للجميع
 # ============================================
 @tree.command(
     name="send_all",
@@ -140,13 +142,23 @@ async def send_all(interaction: discord.Interaction, message: str = None):
     )
 
 # ============================================
-# حدث تسجيل الأوامر عند تشغيل البوت
+# تشغيل البوت مع حالة Streaming بنفسجية
 # ============================================
 @bot.event
 async def on_ready():
     await tree.sync()
+    
+    # ======== تعيين حالة البوت إلى Streaming (بنفسجي) ========
+    await bot.change_presence(
+        activity=discord.Streaming(
+            name=STREAM_NAME,      # النص الظاهر (مثل: KING LIVE!)
+            url=STREAM_LINK        # رابط البث (مثل: رابط تويتش)
+        )
+    )
+    
     print(f"[+] Bot is ready as {bot.user}")
     print(f"[+] Slash commands synced!")
+    print(f"[+] Streaming: {STREAM_NAME} -> {STREAM_LINK}")
 
 # ============================================
 # تشغيل البوت
