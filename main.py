@@ -14,7 +14,8 @@ if TOKEN is None:
 # ======== إعدادات البوت ========
 ALLOWED_ROLE_NAME = "k"  # اسم الرتبة المسموح لها
 STREAM_LINK = "https://www.twitch.tv/king"  # رابط قناتك
-STREAM_NAME = "KING LIVE!"  # اسم البث
+STREAM_NAME = "KINGS!"  # اسم البث
+
 
 intents = discord.Intents.default()
 intents.message_content = True
